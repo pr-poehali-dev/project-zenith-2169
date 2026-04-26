@@ -19,19 +19,22 @@ export default function Hero() {
         className="absolute inset-0 w-full h-full"
       >
         <img
-          src="/images/mountain-landscape.jpg"
-          alt="Mountain landscape"
+          src="https://cdn.poehali.dev/projects/d6085f8e-b88c-4ead-8c2f-dc38d0eea019/files/20828359-70e4-49c2-892c-afdf7369de58.jpg"
+          alt="Meme culture collage"
           className="w-full h-full object-cover"
         />
       </motion.div>
 
       <div className="relative z-10 text-center text-white">
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
-          ОТКРОЙ
+          МЕМЫ
         </h1>
-        <p className="text-lg md:text-xl max-w-2xl mx-auto px-6 opacity-90">
-          Исследуй границы дизайна с иммерсивным параллакс-эффектом
+        <p className="text-lg md:text-xl max-w-2xl mx-auto px-6 opacity-90 mb-8">
+          Скачивай лучшие мемы, ставь оценки и оставляй рецензии. Интернет-культура под одной крышей.
         </p>
+        <button className="bg-white text-black px-8 py-3 uppercase tracking-wide text-sm font-bold hover:bg-neutral-200 transition-colors duration-300 cursor-pointer">
+          Начать бесплатно
+        </button>
       </div>
     </div>
   );
