@@ -1,17 +1,13 @@
-import Header from "@/components/Header";
-import Hero from "@/components/Hero";
-import Featured from "@/components/Featured";
-import Promo from "@/components/Promo";
-import Footer from "@/components/Footer";
+import SiteHeader from "@/components/SiteHeader";
+import MemeGrid from "@/components/MemeGrid";
+import SupportSection from "@/components/SupportSection";
 
 const Index = () => {
   return (
-    <main className="min-h-screen">
-      <Header />
-      <Hero />
-      <Featured />
-      <Promo />
-      <Footer />
+    <main className="min-h-screen bg-black">
+      <SiteHeader />
+      <MemeGrid />
+      <SupportSection />
     </main>
   );
 };
