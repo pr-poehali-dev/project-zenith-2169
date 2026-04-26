@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "name": "Get memes list",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "bodyMatcher": "skip"
+    },
+    {
+      "name": "Search memes",
+      "method": "GET",
+      "path": "/?q=кот",
+      "expectedStatus": 200,
+      "bodyMatcher": "skip"
+    },
+    {
+      "name": "Post review",
+      "method": "POST",
+      "path": "/?action=review",
+      "body": {"meme_id": 1, "rating": 8, "body": "Отличный мем!", "author_name": "Тестер"},
+      "expectedStatus": 200,
+      "bodyMatcher": "skip"
+    }
+  ]
+}

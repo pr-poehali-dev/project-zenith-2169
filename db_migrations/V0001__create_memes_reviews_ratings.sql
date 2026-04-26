@@ -1,0 +1,25 @@
+
+CREATE TABLE IF NOT EXISTS memes (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  author TEXT NOT NULL,
+  image_url TEXT NOT NULL,
+  tags TEXT[] DEFAULT '{}',
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS meme_ratings (
+  id SERIAL PRIMARY KEY,
+  meme_id INTEGER NOT NULL REFERENCES memes(id),
+  score INTEGER NOT NULL CHECK (score BETWEEN 1 AND 10),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS meme_reviews (
+  id SERIAL PRIMARY KEY,
+  meme_id INTEGER NOT NULL REFERENCES memes(id),
+  author_name TEXT NOT NULL DEFAULT 'Аноним',
+  body TEXT NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 10),
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
