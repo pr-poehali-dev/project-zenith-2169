@@ -29,7 +29,7 @@ export default function SupportSection() {
       <div className="max-w-2xl mx-auto text-center">
         <p className="text-burgundy-light text-xs uppercase tracking-[0.4em] mb-3 font-medium">Поддержать автора</p>
         <h2 className="text-white text-3xl md:text-4xl font-black tracking-tight mb-3">
-          Понравился мем?
+          Доволен?
         </h2>
         <p className="text-neutral-500 text-sm mb-10">
           Авторы стараются ради вас. Небольшой жест — большая мотивация.

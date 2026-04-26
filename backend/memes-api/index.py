@@ -1,14 +1,25 @@
 """
-API для мемов: получение списка, поиск, добавление рецензий и оценок.
-Роутинг через ?action=review|reviews, GET / — список мемов.
+API для мемов: список, поиск, рецензии, оценки, загрузка своих мемов в S3.
 """
+import base64
 import json
 import os
+import uuid
 import psycopg2
+import boto3
 
 
 def get_conn():
     return psycopg2.connect(os.environ["DATABASE_URL"])
+
+
+def get_s3():
+    return boto3.client(
+        "s3",
+        endpoint_url="https://bucket.poehali.dev",
+        aws_access_key_id=os.environ["AWS_ACCESS_KEY_ID"],
+        aws_secret_access_key=os.environ["AWS_SECRET_ACCESS_KEY"],
+    )
 
 
 CORS = {
@@ -41,8 +52,7 @@ SEED = [
 
 def seed_if_empty(cur):
     cur.execute("SELECT COUNT(*) FROM memes")
-    count = cur.fetchone()[0]
-    if count == 0:
+    if cur.fetchone()[0] == 0:
         for title, author, url, tags in SEED:
             cur.execute(
                 "INSERT INTO memes (title, author, image_url, tags) VALUES (%s, %s, %s, %s)",
@@ -62,6 +72,35 @@ def handler(event: dict, context) -> dict:
     cur = conn.cursor()
 
     try:
+        # POST ?action=upload — загрузить мем в S3 и сохранить в БД
+        if method == "POST" and action == "upload":
+            data = json.loads(event.get("body") or "{}")
+            title = data.get("title", "").strip()
+            author = data.get("author", "Аноним").strip() or "Аноним"
+            tags_raw = data.get("tags", "")
+            tags = [t.strip().lower() for t in tags_raw.split(",") if t.strip()]
+            image_b64 = data.get("image", "")
+            content_type = data.get("content_type", "image/jpeg")
+
+            if not title or not image_b64:
+                return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "title and image required"})}
+
+            image_data = base64.b64decode(image_b64)
+            ext = "png" if "png" in content_type else "gif" if "gif" in content_type else "jpg"
+            key = f"memes/{uuid.uuid4()}.{ext}"
+
+            s3 = get_s3()
+            s3.put_object(Bucket="files", Key=key, Body=image_data, ContentType=content_type)
+            image_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/files/{key}"
+
+            cur.execute(
+                "INSERT INTO memes (title, author, image_url, tags) VALUES (%s, %s, %s, %s) RETURNING id",
+                (title, author, image_url, tags)
+            )
+            meme_id = cur.fetchone()[0]
+            conn.commit()
+            return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True, "meme_id": meme_id, "image_url": image_url})}
+
         # POST ?action=review — сохранить рецензию + оценку
         if method == "POST" and action == "review":
             data = json.loads(event.get("body") or "{}")
@@ -70,10 +109,7 @@ def handler(event: dict, context) -> dict:
             body = data.get("body", "").strip()
             author_name = data.get("author_name", "Аноним").strip() or "Аноним"
 
-            cur.execute(
-                "INSERT INTO meme_ratings (meme_id, score) VALUES (%s, %s)",
-                (meme_id, rating)
-            )
+            cur.execute("INSERT INTO meme_ratings (meme_id, score) VALUES (%s, %s)", (meme_id, rating))
             if body:
                 cur.execute(
                     "INSERT INTO meme_reviews (meme_id, author_name, body, rating) VALUES (%s, %s, %s, %s)",
@@ -118,25 +154,20 @@ def handler(event: dict, context) -> dict:
             if search:
                 safe = search.replace("'", "''")
                 conditions.append(
-                    "(LOWER(m.title) LIKE '%" + safe + "%' OR LOWER(m.author) LIKE '%" + safe + "%' OR EXISTS (SELECT 1 FROM unnest(m.tags) t WHERE LOWER(t) LIKE '%" + safe + "%'))"
+                    "(LOWER(m.title) LIKE '%" + safe + "%' OR LOWER(m.author) LIKE '%" + safe + "%'"
+                    " OR EXISTS (SELECT 1 FROM unnest(m.tags) t WHERE LOWER(t) LIKE '%" + safe + "%'))"
                 )
             if conditions:
                 query += " WHERE " + " AND ".join(conditions)
             query += " GROUP BY m.id"
-            if sort == "top":
-                query += " ORDER BY avg_rating DESC, review_count DESC"
-            else:
-                query += " ORDER BY m.created_at DESC"
+            query += " ORDER BY avg_rating DESC, review_count DESC" if sort == "top" else " ORDER BY m.created_at DESC"
 
             cur.execute(query)
             rows = cur.fetchall()
             memes = [
-                {
-                    "id": r[0], "title": r[1], "author": r[2],
-                    "image_url": r[3], "tags": r[4] or [],
-                    "created_at": r[5].isoformat() if r[5] else None,
-                    "avg_rating": float(r[6]), "review_count": int(r[7]),
-                }
+                {"id": r[0], "title": r[1], "author": r[2], "image_url": r[3],
+                 "tags": r[4] or [], "created_at": r[5].isoformat() if r[5] else None,
+                 "avg_rating": float(r[6]), "review_count": int(r[7])}
                 for r in rows
             ]
             return {"statusCode": 200, "headers": CORS, "body": json.dumps({"memes": memes})}

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
+import UploadModal from "@/components/UploadModal";
 
 const API = "https://functions.poehali.dev/57246603-008a-4886-9f6e-ae7bca848967";
 
@@ -161,6 +162,7 @@ export default function MemeGrid() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"new" | "top">("new");
   const [selected, setSelected] = useState<Meme | null>(null);
+  const [showUpload, setShowUpload] = useState(false);
 
   const fetchMemes = useCallback(async (q: string, s: string) => {
     setLoading(true);
@@ -182,6 +184,13 @@ export default function MemeGrid() {
     <section id="memes" className="bg-black px-4 md:px-8 lg:px-16 py-14">
       {/* Поиск и сортировка */}
       <div className="flex flex-col sm:flex-row gap-3 mb-8">
+        <button
+          onClick={() => setShowUpload(true)}
+          className="flex items-center gap-2 bg-burgundy hover:bg-burgundy-light text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors shrink-0 sm:order-last"
+        >
+          <Icon name="Plus" size={16} />
+          Добавить мем
+        </button>
         <div className="relative flex-1">
           <Icon name="Search" size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500" />
           <input
@@ -301,6 +310,13 @@ export default function MemeGrid() {
           meme={selected}
           onClose={() => setSelected(null)}
           onSubmitted={() => fetchMemes(search, sort)}
+        />
+      )}
+
+      {showUpload && (
+        <UploadModal
+          onClose={() => setShowUpload(false)}
+          onUploaded={() => { setShowUpload(false); fetchMemes(search, sort); }}
         />
       )}
     </section>

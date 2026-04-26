@@ -22,7 +22,7 @@ export default function SiteHeader() {
           MEMEs
         </h1>
         <p className="text-neutral-400 text-sm md:text-base max-w-md">
-          Скачивай, оценивай и пиши рецензии на лучшие мемы интернета
+          Скачивай, оценивай и пиши рецензии на лучшие моменты кинематографа
         </p>
       </div>
     </header>
